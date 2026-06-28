@@ -20,6 +20,9 @@ var (
 	outputFormat string
 	outputFile   string
 
+	// Port to run the UI server on.
+	Port int
+
 	// ConfigInstance is the globally parsed configuration.
 	ConfigInstance *config.Config
 )
@@ -66,13 +69,17 @@ calculate schema differences, generate migrations, and safely apply them.`,
 		if err := cfg.Validate(); err != nil {
 			// Do not fail root validation if subcommands like 'version' are called,
 			// let individual commands check as needed.
-			if cmd.Name() != "version" && cmd.Name() != "help" {
+			if cmd.Name() != "version" && cmd.Name() != "help" && cmd.Name() != "db-schema-differ" {
 				return err
 			}
 		}
 
 		ConfigInstance = cfg
 		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// If no subcommand is provided, run the UI server
+		return uiCmd.RunE(cmd, args)
 	},
 }
 
@@ -95,6 +102,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVar(&safeOnly, "safe-only", false, "only execute or generate safe schema penambahan (no drops)")
 	RootCmd.PersistentFlags().StringVar(&outputFormat, "output-format", "terminal", "output format: terminal | sql | html | json")
 	RootCmd.PersistentFlags().StringVar(&outputFile, "output-file", "", "output file path (optional)")
+	RootCmd.PersistentFlags().IntVarP(&Port, "port", "p", 8080, "Port to run the UI server on")
 }
 
 func initConfig() {

@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var port int
-
 var uiCmd = &cobra.Command{
 	Use:   "ui",
 	Short: "Start the interactive Web UI dashboard",
@@ -24,7 +22,7 @@ var uiCmd = &cobra.Command{
 		}
 
 		server := ui.NewServer(cfg)
-		addr := fmt.Sprintf("127.0.0.1:%d", port)
+		addr := fmt.Sprintf("127.0.0.1:%d", Port)
 		url := fmt.Sprintf("http://%s", addr)
 
 		fmt.Printf("Starting Web UI Server on %s...\n", url)
@@ -61,6 +59,5 @@ func openBrowser(url string) {
 }
 
 func init() {
-	uiCmd.Flags().IntVarP(&port, "port", "p", 8080, "Port to run the UI server on")
 	RootCmd.AddCommand(uiCmd)
 }
