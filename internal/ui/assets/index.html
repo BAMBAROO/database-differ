@@ -49,50 +49,115 @@
 
             /* Sidebar navigation */
             .sidebar {
-                width: 280px;
+                width: 260px;
+                flex-shrink: 0;
                 background: var(--sidebar-bg);
                 border-right: 1px solid var(--border-color);
                 display: flex;
                 flex-direction: column;
-                padding: 2rem 1.5rem;
+                padding: 1.75rem 1.25rem;
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            }
+
+            body.sidebar-collapsed .sidebar {
+                margin-left: -260px;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .logo-container {
+                margin-bottom: 2rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                padding-bottom: 1.25rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .collapse-sidebar-btn {
+                background: none;
+                border: none;
+                color: var(--text-color);
+                cursor: pointer;
+                padding: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+            }
+
+            .collapse-sidebar-btn:hover {
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--primary);
+            }
+
+            .sidebar-toggle-btn {
+                position: fixed;
+                top: 1.5rem;
+                left: 1.5rem;
+                z-index: 100;
+                background: var(--sidebar-bg);
+                border: 1px solid var(--border-color);
+                color: var(--text-color);
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .sidebar-toggle-btn:hover {
+                background: var(--border-color);
+                color: var(--primary);
+            }
+
+            body.sidebar-collapsed .sidebar-toggle-btn {
+                display: flex;
             }
 
             .logo {
-                font-size: 1.5rem;
+                font-size: 1.15rem;
                 font-weight: 700;
                 color: var(--text-title);
-                margin-bottom: 2.5rem;
                 background: linear-gradient(90deg, var(--primary), #bc8cff);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                gap: 0.6rem;
+                letter-spacing: 0.5px;
             }
 
             .logo-dot {
-                width: 10px;
-                height: 10px;
+                width: 8px;
+                height: 8px;
                 background-color: var(--primary);
                 border-radius: 50%;
+                box-shadow: 0 0 10px var(--primary);
             }
 
             .nav-links {
                 display: flex;
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.4rem;
                 flex-grow: 1;
             }
 
             .nav-item {
                 background: none;
-                border: none;
+                border: 1px solid transparent;
                 color: var(--text-color);
                 text-align: left;
-                padding: 0.85rem 1.25rem;
-                border-radius: 10px;
+                padding: 0.7rem 1rem;
+                border-radius: 8px;
                 font-family: inherit;
-                font-size: 1rem;
+                font-size: 0.85rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s ease;
@@ -101,22 +166,48 @@
                 gap: 0.75rem;
             }
 
+            .nav-item svg {
+                opacity: 0.75;
+                transition: opacity 0.2s ease;
+            }
+
             .nav-item:hover {
-                background: rgba(102, 252, 241, 0.05);
-                color: var(--primary);
+                background: rgba(255, 255, 255, 0.03);
+                color: var(--text-title);
+            }
+
+            .nav-item:hover svg {
+                opacity: 1;
             }
 
             .nav-item.active {
-                background: rgba(102, 252, 241, 0.1);
+                background: rgba(102, 252, 241, 0.08);
                 color: var(--primary);
                 font-weight: 600;
-                border: 1px solid rgba(102, 252, 241, 0.2);
+                border: 1px solid rgba(102, 252, 241, 0.15);
+            }
+
+            .nav-item.active svg {
+                color: var(--primary);
+                opacity: 1;
+            }
+
+            .nav-item:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
+
+            .nav-item:disabled:hover {
+                background: none;
+                color: var(--text-color);
             }
 
             .footer-info {
-                font-size: 0.8rem;
+                font-size: 0.75rem;
                 color: #555c66;
                 margin-top: auto;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding-top: 1.25rem;
             }
 
             /* Main Content container */
@@ -283,6 +374,23 @@
                 display: flex;
                 flex-direction: column;
                 gap: 1rem;
+                padding-bottom: 4rem; /* Reserve space so bottom cards aren't obscured by the sticky footer */
+            }
+
+            .sticky-action-bar {
+                position: sticky;
+                bottom: -2.5rem;
+                margin-left: -3rem;
+                margin-right: -3rem;
+                margin-top: 2.5rem;
+                background: rgba(11, 12, 16, 0.75);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-top: 1px solid var(--border-color);
+                padding: 1rem 3rem;
+                display: flex;
+                justify-content: flex-end;
+                z-index: 10;
             }
 
             .diff-table-card {
@@ -448,6 +556,11 @@
         </style>
     </head>
     <body>
+        <!-- Floating Sidebar Toggle Button (visible when sidebar is collapsed) -->
+        <button class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Expand Sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+
         <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner" style="width: 50px; height: 50px; border-width: 5px"></div>
             <div
@@ -460,26 +573,30 @@
 
         <!-- Sidebar Navigation -->
         <div class="sidebar">
-            <div class="logo">
-                <div class="logo-dot"></div>
-                DB Schema Differ
+            <div class="logo-container">
+                <div class="logo">
+                    <div class="logo-dot"></div>
+                    DB Schema Differ
+                </div>
+                <button class="collapse-sidebar-btn" onclick="toggleSidebar()" title="Collapse Sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
             </div>
             <div class="nav-links">
                 <button class="nav-item active" onclick="switchTab('connTab', this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
                     Connection Setup
                 </button>
                 <button class="nav-item" onclick="switchTab('diffTab', this)" id="navDiff" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
                     Visual Comparison
                 </button>
-                <button
-                    class="nav-item"
-                    onclick="switchTab('diagramTab', this)"
-                    id="navDiagram"
-                    disabled
-                >
+                <button class="nav-item" onclick="switchTab('diagramTab', this)" id="navDiagram" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect><path d="M7 12v4M14 5.5h-4M14 16.5h-4"></path></svg>
                     Schema Diagram
                 </button>
                 <button class="nav-item" onclick="switchTab('sqlTab', this)" id="navSql" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
                     Migration SQL
                 </button>
             </div>
@@ -641,7 +758,7 @@
                 <div class="diff-actions-list" id="diffList">
                     <!-- Javascript populated diff list -->
                 </div>
-                <div style="margin-top: 2rem; display: flex; justify-content: flex-end">
+                <div class="sticky-action-bar">
                     <button class="btn-primary" onclick="generateSQL()">
                         Generate Migration SQL
                     </button>
@@ -817,7 +934,7 @@
                         <!-- Rendered SVG will go here -->
                     </div>
                 </div>
-                <div style="margin-top: 2rem; display: flex; justify-content: flex-end">
+                <div class="sticky-action-bar">
                     <button class="btn-primary" onclick="generateSQL()">
                         Generate Migration SQL
                     </button>
@@ -848,13 +965,19 @@
                             >Safe Only (no destructive DROP queries)</label
                         >
                     </div>
-                    <button
-                        class="btn-primary"
-                        onclick="applyMigration()"
-                        style="background-color: var(--warning); color: #000"
-                    >
-                        Apply Migration
-                    </button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn-secondary" onclick="copySQL()" style="margin-left: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy SQL
+                        </button>
+                        <button
+                            class="btn-primary"
+                            onclick="applyMigration()"
+                            style="background-color: var(--warning); color: #000;"
+                        >
+                            Apply Migration
+                        </button>
+                    </div>
                 </div>
                 <div
                     class="status-box"
@@ -890,6 +1013,33 @@
                 const navs = document.querySelectorAll(".nav-item");
                 navs.forEach((n) => n.classList.remove("active"));
                 btn.classList.add("active");
+            }
+
+            function toggleSidebar() {
+                document.body.classList.toggle("sidebar-collapsed");
+            }
+
+            async function copySQL() {
+                const sqlBlock = document.getElementById("sqlBlock");
+                const sqlText = sqlBlock.innerText;
+                try {
+                    await navigator.clipboard.writeText(sqlText);
+                    
+                    const btn = document.querySelector('button[onclick="copySQL()"]');
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!`;
+                    btn.style.borderColor = "var(--success)";
+                    btn.style.color = "var(--success)";
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = origHtml;
+                        btn.style.borderColor = "";
+                        btn.style.color = "";
+                    }, 2000);
+                } catch (err) {
+                    console.error("Failed to copy SQL", err);
+                    alert("Failed to copy SQL to clipboard");
+                }
             }
 
             function showLoading(text) {
