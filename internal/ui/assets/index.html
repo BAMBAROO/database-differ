@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DB Schema Differ — Dashboard</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <style>
+            :root {
+                --bg-color: #0b0c10;
+                --sidebar-bg: #0f1319;
+                --card-bg: rgba(31, 40, 51, 0.45);
+                --border-color: #2c3540;
+                --text-color: #c5c6c7;
+                --text-title: #ffffff;
+                --primary: #66fcf1;
+                --primary-hover: #45a29e;
+                --success: #2ecc71;
+                --warning: #f1c40f;
+                --danger: #e74c3c;
+                --safe-bg: rgba(46, 204, 113, 0.1);
+                --warn-bg: rgba(241, 196, 15, 0.1);
+                --danger-bg: rgba(231, 76, 60, 0.1);
+                --input-bg: #161b22;
+                --header-bg: rgba(31, 40, 51, 0.8);
+                --diagram-canvas-bg: #0d1117;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: "Outfit", sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* Sidebar navigation */
+            .sidebar {
+                width: 280px;
+                background: var(--sidebar-bg);
+                border-right: 1px solid var(--border-color);
+                display: flex;
+                flex-direction: column;
+                padding: 2rem 1.5rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-title);
+                margin-bottom: 2.5rem;
+                background: linear-gradient(90deg, var(--primary), #bc8cff);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .logo-dot {
+                width: 10px;
+                height: 10px;
+                background-color: var(--primary);
+                border-radius: 50%;
+            }
+
+            .nav-links {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                flex-grow: 1;
+            }
+
+            .nav-item {
+                background: none;
+                border: none;
+                color: var(--text-color);
+                text-align: left;
+                padding: 0.85rem 1.25rem;
+                border-radius: 10px;
+                font-family: inherit;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .nav-item:hover {
+                background: rgba(102, 252, 241, 0.05);
+                color: var(--primary);
+            }
+
+            .nav-item.active {
+                background: rgba(102, 252, 241, 0.1);
+                color: var(--primary);
+                font-weight: 600;
+                border: 1px solid rgba(102, 252, 241, 0.2);
+            }
+
+            .footer-info {
+                font-size: 0.8rem;
+                color: #555c66;
+                margin-top: auto;
+            }
+
+            /* Main Content container */
+            .main-content {
+                flex-grow: 1;
+                padding: 2.5rem 3rem;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .tab-panel {
+                display: none;
+                animation: fadeIn 0.3s ease;
+                height: 100%;
+            }
+
+            .tab-panel.active {
+                display: block;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: var(--text-title);
+                margin-bottom: 1.5rem;
+            }
+
+            /* Connection view fields */
+            .form-group {
+                margin-bottom: 1.5rem;
+                max-width: 800px;
+            }
+
+            label {
+                display: block;
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: var(--text-title);
+                margin-bottom: 0.5rem;
+            }
+
+            input,
+            select {
+                width: 100%;
+                background: var(--input-bg);
+                border: 1px solid var(--border-color);
+                color: var(--text-title);
+                padding: 0.85rem 1rem;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                outline: none;
+                transition: border-color 0.2s ease;
+            }
+
+            input:focus,
+            select:focus {
+                border-color: var(--primary);
+            }
+
+            .btn-primary {
+                background: var(--primary);
+                color: #0b0c10;
+                border: none;
+                padding: 0.85rem 2rem;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .btn-primary:hover {
+                background: var(--primary-hover);
+            }
+
+            .btn-secondary {
+                background: var(--input-bg);
+                color: var(--text-title);
+                border: 1px solid var(--border-color);
+                padding: 0.85rem 2rem;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                margin-left: 1rem;
+            }
+
+            .btn-secondary:hover {
+                background: var(--border-color);
+            }
+
+            /* Test Connection indicator */
+            .status-box {
+                margin-top: 1.5rem;
+                padding: 1rem 1.25rem;
+                border-radius: 8px;
+                display: none;
+                max-width: 800px;
+            }
+
+            .status-box.success {
+                display: block;
+                background: var(--safe-bg);
+                color: var(--success);
+                border: 1px solid rgba(46, 204, 113, 0.3);
+            }
+
+            .status-box.error {
+                display: block;
+                background: var(--danger-bg);
+                color: var(--danger);
+                border: 1px solid rgba(231, 76, 60, 0.3);
+            }
+
+            /* Diff visualizer */
+            .summary-dashboard {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 1.25rem;
+                margin-bottom: 2rem;
+            }
+
+            .stat-card {
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 1.25rem;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            }
+
+            .stat-title {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #8d96a0;
+                margin-bottom: 0.5rem;
+            }
+
+            .stat-val {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: var(--text-title);
+            }
+
+            .stat-val.primary {
+                color: var(--primary);
+            }
+            .stat-val.success {
+                color: var(--success);
+            }
+            .stat-val.warning {
+                color: var(--warning);
+            }
+            .stat-val.danger {
+                color: var(--danger);
+            }
+
+            .diff-actions-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .diff-table-card {
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .diff-table-header {
+                padding: 1rem 1.25rem;
+                background: var(--header-bg);
+                border-bottom: 1px solid var(--border-color);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .diff-table-title {
+                font-weight: 600;
+                color: var(--text-title);
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .indicator {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+
+            .indicator.add {
+                background-color: var(--success);
+            }
+            .indicator.modify {
+                background-color: var(--warning);
+            }
+            .indicator.drop {
+                background-color: var(--danger);
+            }
+
+            .badge {
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 0.2rem 0.5rem;
+                border-radius: 6px;
+                text-transform: uppercase;
+                border: 1px solid transparent;
+            }
+
+            .badge.safe {
+                background: var(--safe-bg);
+                color: var(--success);
+                border-color: rgba(46, 204, 113, 0.3);
+            }
+            .badge.warning {
+                background: var(--warn-bg);
+                color: var(--warning);
+                border-color: rgba(241, 196, 15, 0.3);
+            }
+            .badge.danger {
+                background: var(--danger-bg);
+                color: var(--danger);
+                border-color: rgba(231, 76, 60, 0.3);
+            }
+
+            .diff-table-body {
+                padding: 1.25rem;
+            }
+
+            .diff-item {
+                margin-bottom: 1rem;
+            }
+
+            .diff-item:last-child {
+                margin-bottom: 0;
+            }
+
+            .diff-item-title {
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                color: #8d96a0;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+            }
+
+            .diff-item-content {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.85rem;
+                padding: 0.5rem 0.75rem;
+                background: var(--input-bg);
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+                margin-bottom: 0.35rem;
+                color: var(--text-color);
+            }
+
+            /* SQL Editor Code Block */
+            .sql-editor-container {
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                background: var(--input-bg);
+                padding: 1.5rem;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.9rem;
+                color: var(--text-title);
+                max-height: 450px;
+                overflow-y: auto;
+                white-space: pre-wrap;
+                margin-bottom: 1.5rem;
+            }
+
+            /* Loader */
+            .spinner {
+                border: 3px solid rgba(255, 255, 255, 0.1);
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                border-left-color: var(--primary);
+                animation: spin 1s linear infinite;
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 0.5rem;
+            }
+
+            .loading-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(11, 12, 16, 0.85);
+                z-index: 100;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            /* Animations */
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(5px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner" style="width: 50px; height: 50px; border-width: 5px"></div>
+            <div
+                id="loadingText"
+                style="font-size: 1.2rem; font-weight: 500; color: var(--primary)"
+            >
+                Introspecting Databases...
+            </div>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-dot"></div>
+                DB Schema Differ
+            </div>
+            <div class="nav-links">
+                <button class="nav-item active" onclick="switchTab('connTab', this)">
+                    Connection Setup
+                </button>
+                <button class="nav-item" onclick="switchTab('diffTab', this)" id="navDiff" disabled>
+                    Visual Comparison
+                </button>
+                <button
+                    class="nav-item"
+                    onclick="switchTab('diagramTab', this)"
+                    id="navDiagram"
+                    disabled
+                >
+                    Schema Diagram
+                </button>
+                <button class="nav-item" onclick="switchTab('sqlTab', this)" id="navSql" disabled>
+                    Migration SQL
+                </button>
+            </div>
+            <div class="footer-info">
+                <p>Version 1.0.0</p>
+                <p>© 2026 DB Schema Differ</p>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Connection Tab -->
+            <div class="tab-panel active" id="connTab">
+                <h2>Database Connection Setup</h2>
+                <!-- Concept Card on Connection Page -->
+                <div
+                    style="
+                        background: rgba(255, 255, 255, 0.02);
+                        border: 1px solid var(--border-color);
+                        border-radius: 12px;
+                        padding: 1.25rem;
+                        margin-bottom: 2rem;
+                        max-width: 800px;
+                        font-family: &quot;Outfit&quot;;
+                    "
+                >
+                    <h4
+                        style="
+                            color: #fff;
+                            font-size: 1rem;
+                            margin-bottom: 0.5rem;
+                            font-weight: 600;
+                        "
+                    >
+                        How It Works
+                    </h4>
+                    <p
+                        style="
+                            font-size: 0.85rem;
+                            line-height: 1.5;
+                            color: #8d96a0;
+                            margin-bottom: 0.75rem;
+                        "
+                    >
+                        This application compares the schemas of two databases and generates SQL
+                        scripts to synchronize the structure of the Target DB to match the Source
+                        DB.
+                    </p>
+                    <ul
+                        style="
+                            font-size: 0.85rem;
+                            color: #8d96a0;
+                            padding-left: 1.25rem;
+                            line-height: 1.6;
+                        "
+                    >
+                        <li>
+                            <b>Source DSN (Desired State)</b>: Your new reference database (e.g.,
+                            local/development database with the most up-to-date schema).
+                        </li>
+                        <li>
+                            <b>Target DSN (Current State)</b>: The database you want to update
+                            (e.g., staging/production database).
+                        </li>
+                    </ul>
+                </div>
+                <div class="form-group">
+                    <label for="driver">Database Driver</label>
+                    <select id="driver">
+                        <option value="mysql">MySQL</option>
+                        <option value="postgres">PostgreSQL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sourceDsn">Source DSN (Desired State / Dev DB)</label>
+                    <input
+                        type="text"
+                        id="sourceDsn"
+                        placeholder="e.g. root:rootpassword@tcp(127.0.0.1:13306)/source_db?parseTime=true"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="targetDsn">Target DSN (Current State / Prod DB)</label>
+                    <input
+                        type="text"
+                        id="targetDsn"
+                        placeholder="e.g. root:rootpassword@tcp(127.0.0.1:13306)/target_db?parseTime=true"
+                    />
+                </div>
+                <div style="margin-top: 2rem">
+                    <button class="btn-primary" onclick="testConnection()">Test Connection</button>
+                    <button class="btn-secondary" onclick="compareSchemas()">
+                        Compare Schemas
+                    </button>
+                </div>
+                <div class="status-box" id="connStatus"></div>
+            </div>
+
+            <!-- Diff Tab -->
+            <div class="tab-panel" id="diffTab">
+                <h2>Visual Comparison Details</h2>
+                <!-- Concept Explanation Box -->
+                <div
+                    style="
+                        background: rgba(102, 252, 241, 0.03);
+                        border: 1px solid rgba(102, 252, 241, 0.15);
+                        border-radius: 12px;
+                        padding: 1.25rem;
+                        margin-bottom: 2rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 1.5rem;
+                        font-family: &quot;Outfit&quot;;
+                    "
+                >
+                    <div style="max-width: 70%">
+                        <h3
+                            style="
+                                color: var(--primary);
+                                font-size: 1.1rem;
+                                margin-bottom: 0.4rem;
+                                font-weight: 600;
+                            "
+                        >
+                            Schema Synchronization Direction
+                        </h3>
+                        <p style="font-size: 0.88rem; line-height: 1.5; color: #8d96a0">
+                            The system detects differences to modify the
+                            <b>Target Database (Current State)</b> schema so that it follows/matches
+                            the <b>Source Database (Desired State)</b>. The generated DDL queries
+                            will execute additions, type changes, or deletions on the Target
+                            Database.
+                        </p>
+                    </div>
+                    <div
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                            color: var(--text-title);
+                            background: #0f1319;
+                            padding: 10px 16px;
+                            border-radius: 8px;
+                            border: 1px solid var(--border-color);
+                            white-space: nowrap;
+                        "
+                    >
+                        <span style="color: #e74c3c">Target DB (Current)</span>
+                        <span style="color: var(--primary); font-size: 1.2rem">──►</span>
+                        <span style="color: #2ecc71">Source DB (Desired)</span>
+                    </div>
+                </div>
+                <div class="summary-dashboard" id="diffDashboard">
+                    <!-- Javascript populated stats -->
+                </div>
+                <div class="diff-actions-list" id="diffList">
+                    <!-- Javascript populated diff list -->
+                </div>
+                <div style="margin-top: 2rem; display: flex; justify-content: flex-end">
+                    <button class="btn-primary" onclick="generateSQL()">
+                        Generate Migration SQL
+                    </button>
+                </div>
+            </div>
+
+            <!-- Diagram Tab -->
+            <div class="tab-panel" id="diagramTab">
+                <h2>Schema Diagram Views</h2>
+                <p style="margin-bottom: 1rem; color: #8d96a0">
+                    Toggle between Source DB, Target DB, or the calculated Comparison (Diff)
+                    diagram.
+                </p>
+
+                <!-- Diagram Selector Toggle Bar -->
+                <div
+                    style="
+                        margin-bottom: 1.25rem;
+                        display: flex;
+                        gap: 0.5rem;
+                        background: #161b22;
+                        padding: 4px;
+                        border-radius: 8px;
+                        border: 1px solid var(--border-color);
+                        width: fit-content;
+                        font-family: &quot;Outfit&quot;;
+                    "
+                >
+                    <button
+                        class="diagram-type-btn"
+                        onclick="switchDiagramType('diff')"
+                        id="btnDiagDiff"
+                        style="
+                            background: var(--primary);
+                            color: #0b0c10;
+                            border: none;
+                            padding: 6px 14px;
+                            border-radius: 6px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            font-family: inherit;
+                            font-size: 0.85rem;
+                            transition: all 0.2s ease;
+                        "
+                    >
+                        Comparison (Diff)
+                    </button>
+                    <button
+                        class="diagram-type-btn"
+                        onclick="switchDiagramType('source')"
+                        id="btnDiagSource"
+                        style="
+                            background: none;
+                            color: var(--text-color);
+                            border: none;
+                            padding: 6px 14px;
+                            border-radius: 6px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            font-family: inherit;
+                            font-size: 0.85rem;
+                            transition: all 0.2s ease;
+                        "
+                    >
+                        Source DB (Desired)
+                    </button>
+                    <button
+                        class="diagram-type-btn"
+                        onclick="switchDiagramType('target')"
+                        id="btnDiagTarget"
+                        style="
+                            background: none;
+                            color: var(--text-color);
+                            border: none;
+                            padding: 6px 14px;
+                            border-radius: 6px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            font-family: inherit;
+                            font-size: 0.85rem;
+                            transition: all 0.2s ease;
+                        "
+                    >
+                        Target DB (Current)
+                    </button>
+                </div>
+
+                <div
+                    id="diagramContainer"
+                    style="
+                        position: relative;
+                        background: #0d1117;
+                        border: 1px solid var(--border-color);
+                        border-radius: 12px;
+                        height: 550px;
+                        overflow: hidden;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        user-select: none;
+                    "
+                >
+                    <!-- Pan & Zoom Controls floating top-right -->
+                    <div
+                        style="
+                            position: absolute;
+                            top: 1rem;
+                            right: 1rem;
+                            z-index: 10;
+                            display: flex;
+                            gap: 0.5rem;
+                            background: rgba(15, 19, 25, 0.85);
+                            padding: 6px;
+                            border-radius: 8px;
+                            border: 1px solid var(--border-color);
+                            backdrop-filter: blur(5px);
+                        "
+                    >
+                        <button
+                            class="btn-secondary"
+                            style="
+                                padding: 0.4rem 0.75rem;
+                                font-size: 0.85rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin: 0;
+                            "
+                            onclick="adjustZoom(1.1)"
+                        >
+                            +
+                        </button>
+                        <button
+                            class="btn-secondary"
+                            style="
+                                padding: 0.4rem 0.75rem;
+                                font-size: 0.85rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin: 0;
+                            "
+                            onclick="adjustZoom(0.9)"
+                        >
+                            -
+                        </button>
+                        <button
+                            class="btn-secondary"
+                            style="
+                                padding: 0.4rem 0.75rem;
+                                font-size: 0.85rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin: 0;
+                            "
+                            onclick="resetZoom()"
+                        >
+                            Reset
+                        </button>
+                    </div>
+                    <div
+                        id="mermaidDiagram"
+                        style="
+                            width: 100%;
+                            height: 100%;
+                            cursor: grab;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transform-origin: center center;
+                            overflow: hidden;
+                        "
+                    >
+                        <!-- Rendered SVG will go here -->
+                    </div>
+                </div>
+                <div style="margin-top: 2rem; display: flex; justify-content: flex-end">
+                    <button class="btn-primary" onclick="generateSQL()">
+                        Generate Migration SQL
+                    </button>
+                </div>
+            </div>
+
+            <!-- SQL Tab -->
+            <div class="tab-panel" id="sqlTab">
+                <h2>SQL Migration Script</h2>
+                <p style="margin-bottom: 1rem; color: #8d96a0">
+                    Please review the generated DDL queries before applying changes.
+                </p>
+                <div class="sql-editor-container" id="sqlBlock">
+                    <!-- SQL string -->
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                    <div
+                        class="form-group"
+                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0"
+                    >
+                        <input
+                            type="checkbox"
+                            id="safeOnly"
+                            style="width: auto"
+                            onchange="generateSQL()"
+                        />
+                        <label for="safeOnly" style="margin-bottom: 0"
+                            >Safe Only (no destructive DROP queries)</label
+                        >
+                    </div>
+                    <button
+                        class="btn-primary"
+                        onclick="applyMigration()"
+                        style="background-color: var(--warning); color: #000"
+                    >
+                        Apply Migration
+                    </button>
+                </div>
+                <div
+                    class="status-box"
+                    id="applyStatus"
+                    style="margin-top: 1.5rem; max-width: 100%"
+                ></div>
+            </div>
+        </div>
+
+        <script>
+            let currentDiff = null;
+
+            // Fetch defaults from backend on load
+            window.addEventListener("load", async () => {
+                try {
+                    const res = await fetch("/api/defaults");
+                    if (res.ok) {
+                        const data = await res.json();
+                        document.getElementById("driver").value = data.Driver || "mysql";
+                        document.getElementById("sourceDsn").value = data.SourceDSN || "";
+                        document.getElementById("targetDsn").value = data.TargetDSN || "";
+                    }
+                } catch (err) {
+                    console.error("Failed to load defaults", err);
+                }
+            });
+
+            function switchTab(tabId, btn) {
+                const panels = document.querySelectorAll(".tab-panel");
+                panels.forEach((p) => p.classList.remove("active"));
+                document.getElementById(tabId).classList.add("active");
+
+                const navs = document.querySelectorAll(".nav-item");
+                navs.forEach((n) => n.classList.remove("active"));
+                btn.classList.add("active");
+            }
+
+            function showLoading(text) {
+                document.getElementById("loadingText").innerText = text;
+                document.getElementById("loadingOverlay").style.display = "flex";
+            }
+
+            function hideLoading() {
+                document.getElementById("loadingOverlay").style.display = "none";
+            }
+
+            async function testConnection() {
+                const driver = document.getElementById("driver").value;
+                const sourceDsn = document.getElementById("sourceDsn").value;
+                const targetDsn = document.getElementById("targetDsn").value;
+                const statusBox = document.getElementById("connStatus");
+
+                statusBox.style.display = "none";
+                showLoading("Testing connections...");
+
+                try {
+                    const res = await fetch("/api/test-connection", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            driver,
+                            source_dsn: sourceDsn,
+                            target_dsn: targetDsn,
+                        }),
+                    });
+                    const data = await res.json();
+                    hideLoading();
+
+                    if (res.ok && data.success) {
+                        statusBox.className = "status-box success";
+                        statusBox.style.display = "block";
+                        statusBox.innerText =
+                            "✓ Connection Test Succeeded: Both source and target databases are accessible.";
+                    } else {
+                        statusBox.className = "status-box error";
+                        statusBox.style.display = "block";
+                        statusBox.innerText =
+                            "✗ Connection Test Failed: " +
+                            (data.error || "Unknown connection error.");
+                    }
+                } catch (err) {
+                    hideLoading();
+                    statusBox.className = "status-box error";
+                    statusBox.style.display = "block";
+                    statusBox.innerText = "✗ Fetch Error: " + err.message;
+                }
+            }
+
+            async function compareSchemas() {
+                const driver = document.getElementById("driver").value;
+                const sourceDsn = document.getElementById("sourceDsn").value;
+                const targetDsn = document.getElementById("targetDsn").value;
+                const statusBox = document.getElementById("connStatus");
+
+                statusBox.style.display = "none";
+                showLoading("Comparing schemas...");
+
+                try {
+                    const res = await fetch("/api/diff", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            driver,
+                            source_dsn: sourceDsn,
+                            target_dsn: targetDsn,
+                        }),
+                    });
+                    const data = await res.json();
+                    hideLoading();
+
+                    if (!res.ok) {
+                        statusBox.className = "status-box error";
+                        statusBox.style.display = "block";
+                        statusBox.innerText =
+                            "✗ Error: " + (data.error || "Failed to compare schemas.");
+                        return;
+                    }
+
+                    currentDiff = data.diff;
+                    lastCompareData = data;
+                    currentDiagramType = "diff";
+                    populateDiffDashboard(data.diff);
+                    populateDiffList(data.diff);
+                    renderDiagram();
+
+                    // Enable tabs
+                    document.getElementById("navDiff").removeAttribute("disabled");
+                    document.getElementById("navDiagram").removeAttribute("disabled");
+                    document.getElementById("navSql").removeAttribute("disabled");
+
+                    // Switch to Diff tab
+                    switchTab("diffTab", document.getElementById("navDiff"));
+                } catch (err) {
+                    hideLoading();
+                    statusBox.className = "status-box error";
+                    statusBox.style.display = "block";
+                    statusBox.innerText = "✗ Fetch Error: " + err.message;
+                }
+            }
+
+            function populateDiffDashboard(diff) {
+                const dash = document.getElementById("diffDashboard");
+                const summary = diff.summary;
+
+                const riskClass =
+                    summary.dangers_count > 0
+                        ? "danger"
+                        : summary.warnings_count > 0
+                          ? "warning"
+                          : "success";
+
+                dash.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-title">Tables (Added/Mod/Drop)</div>
+                    <div class="stat-val primary">${summary.tables_added} / ${summary.tables_modified} / ${summary.tables_dropped}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Columns (Added/Mod/Drop)</div>
+                    <div class="stat-val primary">${summary.columns_added} / ${summary.columns_modified} / ${summary.columns_dropped}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Constraints (+ / -)</div>
+                    <div class="stat-val primary">+${summary.indexes_added + summary.fks_added} / -${summary.indexes_dropped + summary.fks_dropped}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Risk Alerts (W/D)</div>
+                    <div class="stat-val ${riskClass}">${summary.warnings_count}W / ${summary.dangers_count}D</div>
+                </div>
+            `;
+            }
+
+            function populateDiffList(diff) {
+                const list = document.getElementById("diffList");
+                list.innerHTML = "";
+
+                if (!diff.tables || diff.tables.length === 0) {
+                    list.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--success); font-weight: 500;">✓ Database schemas are already identical!</div>`;
+                    return;
+                }
+
+                diff.tables.forEach((table) => {
+                    const card = document.createElement("div");
+                    card.className = "diff-table-card";
+
+                    const actionClass = table.action.toLowerCase();
+                    const severityClass = table.severity.toLowerCase();
+
+                    let actionText = "";
+                    if (table.action === "ADD") actionText = "Table Added";
+                    else if (table.action === "DROP") actionText = "Table Dropped";
+                    else actionText = "Table Modified";
+
+                    let bodyContent = "";
+                    if (table.action === "ADD") {
+                        bodyContent = `<div style="color: #8d96a0;">All columns, primary key, and indexes will be created.</div>`;
+                    } else if (table.action === "DROP") {
+                        bodyContent = `<div style="color: var(--danger); font-weight: 500;">Warning: Table and all containing data will be dropped permanently.</div>`;
+                    } else {
+                        // Columns
+                        if (table.columns && table.columns.length > 0) {
+                            bodyContent += `<div class="diff-item"><div class="diff-item-title">Columns Changes</div>`;
+                            table.columns.forEach((col) => {
+                                const indicator =
+                                    col.action === "ADD" ? "+" : col.action === "DROP" ? "-" : "~";
+                                const indicatorColor =
+                                    col.action === "ADD"
+                                        ? "var(--success)"
+                                        : col.action === "DROP"
+                                          ? "var(--danger)"
+                                          : "var(--warning)";
+
+                                bodyContent += `<div style="margin-bottom: 1.25rem;">`;
+                                bodyContent += `<div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items:center;">
+                                <span style="color: ${indicatorColor}; font-weight: bold; font-size:1.1rem;">${indicator}</span>
+                                <strong style="color:var(--text-title);">${escapeHTML(col.column_name)}</strong>
+                                <span class="badge ${col.severity.toLowerCase()}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius:4px;">${col.severity}</span>
+                            </div>`;
+
+                                if (col.action === "MODIFY" && col.old_column && col.new_column) {
+                                    bodyContent += `
+                                <table style="width:100%; border-collapse:collapse; background:#0f1319; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem; margin-top:0.25rem; font-family:'Outfit';">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid var(--border-color); background:rgba(255,255,255,0.02); text-align:left;">
+                                            <th style="padding:6px 12px; color:#8d96a0; font-weight:500;">Property</th>
+                                            <th style="padding:6px 12px; color:#8d96a0; font-weight:500;">Current State (Target DB)</th>
+                                            <th style="padding:6px 12px; color:#8d96a0; font-weight:500;">Desired State (Source DB)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                `;
+
+                                    // Compare DataType
+                                    if (
+                                        col.old_column.normalized_type !==
+                                        col.new_column.normalized_type
+                                    ) {
+                                        bodyContent += `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding:6px 12px; font-weight:500;">Data Type</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--text-color);">${escapeHTML(col.old_column.normalized_type)}</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--primary); font-weight:600;">${escapeHTML(col.new_column.normalized_type)}</td>
+                                        </tr>
+                                    `;
+                                    }
+
+                                    // Compare Nullable
+                                    if (col.old_column.nullable !== col.new_column.nullable) {
+                                        bodyContent += `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding:6px 12px; font-weight:500;">Nullable</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--text-color);">${escapeHTML(col.old_column.nullable)}</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--primary); font-weight:600;">${escapeHTML(col.new_column.nullable)}</td>
+                                        </tr>
+                                    `;
+                                    }
+
+                                    // Compare Default Value
+                                    const oldDef =
+                                        col.old_column.default_value !== null
+                                            ? col.old_column.default_value
+                                            : "NULL";
+                                    const newDef =
+                                        col.new_column.default_value !== null
+                                            ? col.new_column.default_value
+                                            : "NULL";
+                                    if (oldDef !== newDef) {
+                                        bodyContent += `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding:6px 12px; font-weight:500;">Default Value</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--text-color);">${escapeHTML(oldDef)}</td>
+                                            <td style="padding:6px 12px; font-family:monospace; color:var(--primary); font-weight:600;">${escapeHTML(newDef)}</td>
+                                        </tr>
+                                    `;
+                                    }
+
+                                    bodyContent += `
+                                    </tbody>
+                                </table>
+                                `;
+                                } else if (col.action === "ADD") {
+                                    bodyContent += `<div style="font-size:0.85rem; color:#8d96a0; padding-left:1.25rem; margin-top: 0.25rem;">
+                                    Will be created as: <code style="font-family:monospace; color:var(--success); font-weight:600; background:rgba(46,204,113,0.06); padding: 2px 6px; border-radius:4px;">${escapeHTML(col.new_column.normalized_type)} ${col.new_column.nullable === "NO" ? "NOT NULL" : "NULL"}</code>
+                                </div>`;
+                                } else if (col.action === "DROP") {
+                                    bodyContent += `<div style="font-size:0.85rem; color:var(--danger); padding-left:1.25rem; font-weight:500; margin-top: 0.25rem;">
+                                    This column and all its stored values will be dropped permanently.
+                                </div>`;
+                                }
+
+                                bodyContent += `</div>`;
+                            });
+                            bodyContent += `</div>`;
+                        }
+
+                        // Indexes
+                        if (table.indexes && table.indexes.length > 0) {
+                            bodyContent += `<div class="diff-item"><div class="diff-item-title">Indexes</div>`;
+                            table.indexes.forEach((idx) => {
+                                const indicator = idx.action === "ADD" ? "+" : "-";
+                                const indicatorColor =
+                                    idx.action === "ADD" ? "var(--success)" : "var(--danger)";
+                                bodyContent += `<div style="display: flex; gap: 0.5rem;">
+                                <span style="color: ${indicatorColor}; font-weight: bold;">${indicator}</span>
+                                <span>Index <strong>${idx.index_name}</strong> (${idx.action === "ADD" ? "added" : "dropped"})</span>
+                            </div>`;
+                            });
+                            bodyContent += `</div>`;
+                        }
+
+                        // FKs
+                        if (table.foreign_keys && table.foreign_keys.length > 0) {
+                            bodyContent += `<div class="diff-item"><div class="diff-item-title">Foreign Keys</div>`;
+                            table.foreign_keys.forEach((fk) => {
+                                const indicator = fk.action === "ADD" ? "+" : "-";
+                                const indicatorColor =
+                                    fk.action === "ADD" ? "var(--success)" : "var(--danger)";
+                                bodyContent += `<div style="display: flex; gap: 0.5rem;">
+                                <span style="color: ${indicatorColor}; font-weight: bold;">${indicator}</span>
+                                <span>FK <strong>${fk.fk_name}</strong> (${fk.action === "ADD" ? "added" : "dropped"})</span>
+                            </div>`;
+                            });
+                            bodyContent += `</div>`;
+                        }
+                    }
+
+                    card.innerHTML = `
+                    <div class="diff-table-header">
+                        <div class="diff-table-title">
+                            <span class="indicator ${actionClass}"></span>
+                            ${table.table_name} 
+                            <span style="font-size: 0.8rem; font-weight: normal; color: #8d96a0;">(${actionText})</span>
+                        </div>
+                        <span class="badge ${severityClass}">${table.severity}</span>
+                    </div>
+                    <div class="diff-table-body">
+                        ${bodyContent}
+                    </div>
+                `;
+                    list.appendChild(card);
+                });
+            }
+
+            async function generateSQL() {
+                const driver = document.getElementById("driver").value;
+                const sourceDsn = document.getElementById("sourceDsn").value;
+                const targetDsn = document.getElementById("targetDsn").value;
+                const safeOnly = document.getElementById("safeOnly").checked;
+                const sqlBlock = document.getElementById("sqlBlock");
+
+                showLoading("Generating DDL SQL...");
+
+                try {
+                    const res = await fetch("/api/generate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            driver,
+                            source_dsn: sourceDsn,
+                            target_dsn: targetDsn,
+                            safe_only: safeOnly,
+                        }),
+                    });
+                    const data = await res.json();
+                    hideLoading();
+
+                    if (!res.ok) {
+                        sqlBlock.innerText =
+                            "-- Error: " + (data.error || "Failed to generate DDL.");
+                        return;
+                    }
+
+                    sqlBlock.innerText = data.sql || "-- No SQL statements to apply.";
+
+                    // Switch to SQL tab if on diff tab
+                    if (document.getElementById("diffTab").classList.contains("active")) {
+                        switchTab("sqlTab", document.getElementById("navSql"));
+                    }
+                } catch (err) {
+                    hideLoading();
+                    sqlBlock.innerText = "-- Fetch Error: " + err.message;
+                }
+            }
+
+            async function applyMigration() {
+                const driver = document.getElementById("driver").value;
+                const sourceDsn = document.getElementById("sourceDsn").value;
+                const targetDsn = document.getElementById("targetDsn").value;
+                const safeOnly = document.getElementById("safeOnly").checked;
+                const statusBox = document.getElementById("applyStatus");
+
+                statusBox.style.display = "none";
+
+                // Confirm window
+                const hasDanger =
+                    currentDiff && currentDiff.summary && currentDiff.summary.dangers_count > 0;
+                if (hasDanger) {
+                    if (
+                        !confirm(
+                            "⚠️ WARNING: Destructive actions (DROP operations) are in this migration script. Do you want to proceed?",
+                        )
+                    ) {
+                        return;
+                    }
+                } else {
+                    if (
+                        !confirm(
+                            "Are you sure you want to apply this migration to target database?",
+                        )
+                    ) {
+                        return;
+                    }
+                }
+
+                showLoading("Applying migration changes...");
+
+                try {
+                    const res = await fetch("/api/apply", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            driver,
+                            source_dsn: sourceDsn,
+                            target_dsn: targetDsn,
+                            safe_only: safeOnly,
+                        }),
+                    });
+                    const data = await res.json();
+                    hideLoading();
+
+                    if (res.ok && data.success) {
+                        statusBox.className = "status-box success";
+                        statusBox.style.display = "block";
+                        statusBox.innerText =
+                            "✓ Success: Migration applied completely and target database is in sync.";
+                        // Disable diff / diagram / sql tabs since schemas are synced
+                        document.getElementById("navDiff").setAttribute("disabled", "true");
+                        document.getElementById("navDiagram").setAttribute("disabled", "true");
+                        document.getElementById("navSql").setAttribute("disabled", "true");
+                        switchTab("connTab", document.querySelector(".nav-item"));
+                    } else {
+                        statusBox.className = "status-box error";
+                        statusBox.style.display = "block";
+                        statusBox.innerHTML = `<strong>✗ Execution Failed:</strong><br><pre style="white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; margin-top: 0.5rem;">${data.error || "Unknown error occurred while applying."}</pre>`;
+                    }
+                } catch (err) {
+                    hideLoading();
+                    statusBox.className = "status-box error";
+                    statusBox.style.display = "block";
+                    statusBox.innerText = "✗ Fetch Error: " + err.message;
+                }
+            }
+
+            // Initialize Mermaid
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: "dark",
+                securityLevel: "loose",
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
+                    curve: "basis", // Make lines smooth bezier curves!
+                },
+            });
+
+            // Pan and Zoom viewport state variables
+            let zoom = 1;
+            let panX = 0;
+            let panY = 0;
+            let isPanning = false;
+            let startX = 0;
+            let startY = 0;
+
+            let lastCompareData = null;
+            let currentDiagramType = "diff";
+
+            const diagramContainer = document.getElementById("diagramContainer");
+            const diagramEl = document.getElementById("mermaidDiagram");
+
+            // Drag/Pan handlers
+            diagramEl.addEventListener("mousedown", (e) => {
+                if (e.button !== 0) return;
+                isPanning = true;
+                diagramEl.style.cursor = "grabbing";
+                startX = e.clientX - panX;
+                startY = e.clientY - panY;
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (!isPanning) return;
+                panX = e.clientX - startX;
+                panY = e.clientY - startY;
+                updateTransform(true);
+            });
+
+            window.addEventListener("mouseup", () => {
+                if (isPanning) {
+                    isPanning = false;
+                    diagramEl.style.cursor = "grab";
+                }
+            });
+
+            // Mouse Wheel Zoom (with reduced sensitivity)
+            diagramContainer.addEventListener(
+                "wheel",
+                (e) => {
+                    e.preventDefault();
+                    // Reduced scale multiplier for smooth micro-scrolling zooming
+                    const factor = Math.exp(-e.deltaY * 0.0006);
+                    zoom *= factor;
+                    zoom = Math.min(Math.max(0.15, zoom), 3.0);
+                    updateTransform(false);
+                },
+                { passive: false },
+            );
+
+            function updateTransform(fast) {
+                const svg = diagramEl.querySelector("svg");
+                if (svg) {
+                    svg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+                    svg.style.transformOrigin = "center center";
+                    svg.style.transition = fast
+                        ? "none"
+                        : "transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+                }
+            }
+
+            function adjustZoom(factor) {
+                zoom *= factor;
+                zoom = Math.min(Math.max(0.15, zoom), 3.0);
+                updateTransform(false);
+            }
+
+            function resetZoom() {
+                zoom = 0.95;
+                panX = 0;
+                panY = 0;
+                updateTransform(false);
+            }
+
+            function escapeHTML(str) {
+                if (!str) return "";
+                return str
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function switchDiagramType(type) {
+                currentDiagramType = type;
+
+                // Reset button active states
+                const buttons = document.querySelectorAll(".diagram-type-btn");
+                buttons.forEach((btn) => {
+                    btn.style.background = "none";
+                    btn.style.color = "var(--text-color)";
+                    btn.style.fontWeight = "500";
+                });
+
+                const activeBtn = document.getElementById(
+                    "btnDiag" + type.charAt(0).toUpperCase() + type.slice(1),
+                );
+                if (activeBtn) {
+                    activeBtn.style.background = "var(--primary)";
+                    activeBtn.style.color = "#0b0c10";
+                    activeBtn.style.fontWeight = "600";
+                }
+
+                renderDiagram();
+            }
+
+            async function renderDiagram() {
+                if (!lastCompareData) return;
+                const container = document.getElementById("mermaidDiagram");
+                container.removeAttribute("data-processed"); // Reset cache
+
+                const code = generateMermaidDiagram(lastCompareData, currentDiagramType);
+
+                try {
+                    const { svg } = await mermaid.render("mermaidSvgId", code);
+                    container.innerHTML = svg;
+                    resetZoom();
+                } catch (err) {
+                    console.error("Failed to render Mermaid diagram", err);
+                    container.innerHTML = `<div style="color:var(--danger); padding:1.5rem; text-align:left; font-family:'Outfit';">
+                    <strong style="font-size:1.1rem;">✗ Diagram Rendering Error</strong><br/>
+                    <span style="font-size:0.9rem; color:#8d96a0;">Failed to render: ${escapeHTML(err.message)}</span><br/><br/>
+                    <strong>Raw Diagram Code:</strong>
+                    <pre style="margin-top:0.5rem; padding: 1rem; background:#161b22; border-radius:8px; border:1px solid var(--border-color); overflow:auto; font-family:monospace; font-size:0.8rem; color:#8d96a0;">${escapeHTML(code)}</pre>
+                </div>`;
+                }
+            }
+
+            function generateMermaidDiagram(data, type) {
+                const diff = data.diff;
+                const source = data.source;
+                const target = data.target;
+
+                let code = "flowchart TD\n";
+                code += "    classDef transparent fill:none,stroke:none;\n\n";
+
+                const tables = {};
+
+                if (type === "source") {
+                    if (source && source.tables) {
+                        for (const name in source.tables) {
+                            tables[name] = {
+                                state: "unchanged",
+                                columns: source.tables[name].columns,
+                                order: source.tables[name].column_order,
+                                fks: source.tables[name].foreign_keys,
+                            };
+                        }
+                    }
+                } else if (type === "target") {
+                    if (target && target.tables) {
+                        for (const name in target.tables) {
+                            tables[name] = {
+                                state: "unchanged",
+                                columns: target.tables[name].columns,
+                                order: target.tables[name].column_order,
+                                fks: target.tables[name].foreign_keys,
+                            };
+                        }
+                    }
+                } else {
+                    // 'diff'
+                    if (source && source.tables) {
+                        for (const name in source.tables) {
+                            tables[name] = {
+                                state: "unchanged",
+                                columns: source.tables[name].columns,
+                                order: source.tables[name].column_order,
+                                fks: source.tables[name].foreign_keys,
+                            };
+                        }
+                    }
+                    if (target && target.tables) {
+                        for (const name in target.tables) {
+                            if (!tables[name]) {
+                                tables[name] = {
+                                    state: "dropped",
+                                    columns: target.tables[name].columns,
+                                    order: target.tables[name].column_order,
+                                    fks: target.tables[name].foreign_keys,
+                                };
+                            }
+                        }
+                    }
+
+                    // Map differences to table statuses
+                    if (diff && diff.tables) {
+                        diff.tables.forEach((t) => {
+                            if (t.action === "ADD") {
+                                if (tables[t.table_name]) tables[t.table_name].state = "added";
+                            } else if (t.action === "DROP") {
+                                if (tables[t.table_name]) tables[t.table_name].state = "dropped";
+                            } else if (t.action === "MODIFY") {
+                                if (tables[t.table_name]) {
+                                    tables[t.table_name].state = "modified";
+                                    tables[t.table_name].colDiffs = t.columns;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Render custom HTML styled table cards
+                for (const tableName in tables) {
+                    const t = tables[tableName];
+
+                    // Find PK columns
+                    const pkCols = new Set();
+                    const tableSource = source && source.tables ? source.tables[tableName] : null;
+                    const tableTarget = target && target.tables ? target.tables[tableName] : null;
+                    const activeTableObj = tableSource || tableTarget;
+
+                    if (activeTableObj && activeTableObj.indexes) {
+                        for (const idxName in activeTableObj.indexes) {
+                            const idx = activeTableObj.indexes[idxName];
+                            if (idx.type === "PRIMARY" || idxName === "PRIMARY") {
+                                idx.columns.forEach((c) => pkCols.add(c));
+                            }
+                        }
+                    }
+
+                    // Find FK columns
+                    const fkCols = new Set();
+                    if (t.fks) {
+                        for (const fkName in t.fks) {
+                            fkCols.add(t.fks[fkName].column);
+                        }
+                    }
+
+                    let cardBg = "#131720";
+                    let textCol = "#f0f6fc";
+                    let cardBorder = "#455060";
+                    let headBg = "rgba(255, 255, 255, 0.08)";
+                    let glow = "0 6px 20px rgba(0,0,0,0.4)";
+                    let badge = "";
+                    let statusDot = `<span style="color:#8b949e !important; margin-right:6px;">●</span>`;
+
+                    if (type === "diff") {
+                        if (t.state === "added") {
+                            cardBorder = "#2ecc71";
+                            headBg = "rgba(46, 204, 113, 0.25)";
+                            glow = "0 0 25px rgba(46, 204, 113, 0.25)";
+                            badge = `<span style="float:right; font-size:9px; background:rgba(46,204,113,0.2); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); padding:1px 5px; border-radius:4px; font-weight:700;">NEW</span>`;
+                            statusDot = `<span style="color:#2ecc71 !important; margin-right:6px;">●</span>`;
+                        } else if (t.state === "dropped") {
+                            cardBorder = "#e74c3c";
+                            headBg = "rgba(231, 76, 60, 0.25)";
+                            glow = "0 0 25px rgba(231, 76, 60, 0.25)";
+                            badge = `<span style="float:right; font-size:9px; background:rgba(231,76,60,0.2); color:#e74c3c; border:1px solid rgba(231,76,60,0.3); padding:1px 5px; border-radius:4px; font-weight:700;">DROP</span>`;
+                            statusDot = `<span style="color:#e74c3c !important; margin-right:6px;">●</span>`;
+                        } else if (t.state === "modified") {
+                            cardBorder = "#f1c40f";
+                            headBg = "rgba(241, 196, 15, 0.25)";
+                            glow = "0 0 25px rgba(241, 196, 15, 0.25)";
+                            badge = `<span style="float:right; font-size:9px; background:rgba(241,196,15,0.2); color:#f1c40f; border:1px solid rgba(241,196,15,0.3); padding:1px 5px; border-radius:4px; font-weight:700;">MOD</span>`;
+                            statusDot = `<span style="color:#f1c40f !important; margin-right:6px;">●</span>`;
+                        }
+                    }
+
+                    let columnsHtml = "";
+                    if (t.order) {
+                        t.order.forEach((colName, colIdx) => {
+                            const col = t.columns[colName];
+                            let prefix = "";
+                            let colColor = "#f0f6fc";
+                            let typeColor = "#9ea7b3";
+                            let textDecoration = "none";
+                            let opacity = "1.0";
+
+                            if (type === "diff" && t.colDiffs) {
+                                const cDiff = t.colDiffs.find((cd) => cd.column_name === colName);
+                                if (cDiff) {
+                                    if (cDiff.action === "ADD") {
+                                        prefix = `<span style="color:#4ade80 !important; font-weight:bold; margin-right:4px;">+</span>`;
+                                        colColor = '#4ade80';
+                                        typeColor = '#a7f3d0';
+                                    } else if (cDiff.action === "DROP") {
+                                        prefix = `<span style="color:#f87171 !important; font-weight:bold; margin-right:4px;">-</span>`;
+                                        colColor = '#f87171';
+                                        typeColor = '#fca5a5';
+                                        textDecoration = "line-through";
+                                        opacity = "0.6";
+                                    } else {
+                                        prefix = `<span style="color:#fbbf24 !important; font-weight:bold; margin-right:4px;">~</span>`;
+                                        colColor = '#fbbf24';
+                                        typeColor = '#fde68a';
+                                    }
+                                }
+                            }
+
+                            // Primary Key / Foreign Key Badges
+                            let pkBadge = "";
+                            let fkBadge = "";
+                            if (pkCols.has(colName)) {
+                                pkBadge = `<span style="font-size:8px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:1px 3px; border-radius:3px; font-weight:700; margin-left:4px; vertical-align:middle; line-height:1;">PK</span>`;
+                            }
+                            if (fkCols.has(colName)) {
+                                fkBadge = `<span style="font-size:8px; background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); padding:1px 3px; border-radius:3px; font-weight:700; margin-left:4px; vertical-align:middle; line-height:1;">FK</span>`;
+                            }
+
+                            // Zebra rows background and borders
+                            let rowBg = colIdx % 2 === 0 ? "rgba(255,255,255,0.015)" : "none";
+                            let borderBottom = colIdx < t.order.length - 1 ? "border-bottom:1px solid rgba(255,255,255,0.03);" : "";
+
+                            columnsHtml += `
+                        <div style="display:flex; justify-content:space-between; padding:8px 10px; align-items:center; background:${rowBg}; ${borderBottom} opacity:${opacity}; text-decoration:${textDecoration};">
+                            <span style="color:${colColor} !important; font-weight:500; display:flex; align-items:center;">
+                                ${prefix}${escapeHTML(colName)}${pkBadge}${fkBadge}
+                            </span>
+                            <span style="color:${typeColor} !important; font-size:10px; margin-left:18px; font-weight:normal; font-family:\'JetBrains Mono\', monospace;">${escapeHTML(col.normalized_type)}</span>
+                        </div>`;
+                        });
+                    }
+
+                    // Table Card with rich high-contrast theme
+                    const htmlCard = `
+                    <div style="background:${cardBg}; border:2px solid ${cardBorder}; border-radius:10px; box-shadow:${glow}; overflow:hidden; min-width:240px; text-align:left; font-family:\'Outfit\', sans-serif; transition: all 0.2s ease;">
+                        <div style="background:${headBg}; padding:12px 14px; font-weight:700; border-bottom:2px solid ${cardBorder}; font-size:14px; color:${textCol}; letter-spacing:0.5px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>${statusDot}${escapeHTML(tableName)}</span>${badge}
+                        </div>
+                        <div style="padding:0; font-size:11.5px; line-height:1.5;">
+                            ${columnsHtml}
+                        </div>
+                    </div>
+                `
+                        .replace(/\s+/g, " ")
+                        .trim();
+
+                    code += `    ${tableName}["${htmlCard}"]:::transparent\n`;
+                }
+
+                code += "\n";
+
+                // Draw foreign key relationships
+                const drawnEdges = {};
+                for (const tableName in tables) {
+                    const t = tables[tableName];
+                    if (t.fks) {
+                        for (const fkName in t.fks) {
+                            const fk = t.fks[fkName];
+                            const edgeKey = `${tableName}->${fk.referenced_table}`;
+                            if (!drawnEdges[edgeKey]) {
+                                code += `    ${tableName} -->|${fk.column}| ${fk.referenced_table}\n`;
+                                drawnEdges[edgeKey] = true;
+                            }
+                        }
+                    }
+                }
+
+                return code;
+            }
+        </script>
+    </body>
+</html>

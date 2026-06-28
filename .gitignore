@@ -1,0 +1,26 @@
+# Binaries
+bin/
+dist/
+
+# Test data & outputs
+*.sql
+*.json
+!migration_state.json.example
+
+# Environment configurations
+.env
+.env.local
+differ.yaml
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db
