@@ -18,25 +18,67 @@
 
 ## Quick Start
 
-### 1. Build from Source
-Build the CLI tool using the provided `Makefile`:
+### 1. Download Pre-built Binaries
+You can download the compiled standalone executables for your operating system directly:
+- **[Latest GitHub Releases (All Platforms)](https://github.com/BAMBAROO/database-differ/releases)**
+
+#### Running on macOS / Linux
+1. Open terminal and navigate to the directory where you downloaded the file.
+2. Grant executable permission:
+   ```bash
+   chmod +x db-schema-differ
+   ```
+3. Run the application:
+   ```bash
+   ./db-schema-differ
+   ```
+   *(On macOS, if blocked by Gatekeeper, go to **System Settings > Privacy & Security** and click **Open Anyway**).*
+
+#### Running on Windows
+- Simply **double-click** `db-schema-differ.exe` to launch the server, or open **Command Prompt/PowerShell** and run:
+  ```powershell
+  .\db-schema-differ.exe
+  ```
+
+---
+
+### 2. How to Use the Web UI (Default Mode)
+When you run the binary with no arguments:
+```bash
+./db-schema-differ
+```
+It starts the premium local Web UI Server on `http://127.0.0.1:8080` and **automatically opens your web browser**. 
+
+Within the dashboard, you can:
+- Input connection DSNs (or load default `.env` variables).
+- **Test Connection** with single-click catalog verification.
+- Review a **Visual Comparison** of schema changes (Safe, Warning, and Destructive actions).
+- Switch between **Comparison, Source DB, and Target DB Schema Diagrams** with fluid viewport pan-and-zoom.
+- **Copy SQL** migrations instantly using the clipboard copier.
+- **Apply Migration** directly to sync your target schema!
+
+*To change the UI port:*
+```bash
+./db-schema-differ --port 9090
+```
+
+---
+
+### 3. Build from Source
+Alternatively, you can compile the executable yourself using Go 1.20+:
 ```bash
 make build
 ```
 This compiles the executable to `bin/db-schema-differ`.
 
-### 2. Configure Connections
-Configure connection details via a `.env` file (copied from `.env.example`) or command flags:
+---
+
+### 4. Configure Connections (Optional)
+Specify DSN connection credentials via a `.env` file to auto-populate the UI forms:
 ```bash
 cp .env.example .env
 ```
 Open `.env` and specify `SOURCE_DSN` (desired dev schema DSN) and `TARGET_DSN` (current staging/prod schema DSN).
-
-### 3. Run Diff
-Compare the schemas and show differences in your terminal:
-```bash
-./bin/db-schema-differ diff
-```
 
 ---
 
